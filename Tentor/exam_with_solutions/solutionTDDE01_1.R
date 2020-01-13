@@ -1,4 +1,4 @@
-data0=read.csv("video.csv")
+data0=read.csv("C:/Users/oskar/OneDrive/Universitet/Luleå Tekniska högskola/Databaser 1/Dokument/Git Repro/TDDE01-Machine-learning/Tentor/exam_with_solutions/video.csv")
 
 data1=data0
 data1$codec=c()

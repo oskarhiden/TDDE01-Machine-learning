@@ -77,8 +77,49 @@ class = ifelse(video$codec == "mpeg4", "mpeg", "other")
 id = which(class == "mpeg")
 mpeg = video[id,]
 other = video[-id,]
-plot(x= mpeg$duration, y=mpeg$frames, col="blue",  main="duration vs frames")
-points(x= other$duration, y= other$frames, col="red")
+plot(y= mpeg$duration, x=mpeg$frames, col="blue",  main="duration vs frames")
+points(y= other$duration, x= other$frames, col="red")
 # an decion boundary would be good. 
 
 # Step 5
+library(MASS)
+data = video
+data$codec = c()
+data = data.frame(scale(data))
+video2 = cbind(data, as.factor(class))
+
+lda_model = lda(class ~ duration + frames, data = video2)
+pred_lda = predict(lda_model)
+pred_lda$class
+id = which(pred_lda$class == "mpeg")
+mpeg = video[id,]
+other = video[-id,]
+plot(y= other$duration, x=other$frames, col="red",  main="duration vs frames")
+points(y=mpeg$duration , x= mpeg$frames, col="blue")
+#plot(x=video2$duration, y=video2$frames, col=pred_lda$class)
+
+conf_matrix = table(class, pred_lda$class)
+missclass = 1 - sum(diag(conf_matrix))/sum(conf_matrix)
+missclass
+# Why bad at classify?
+# 
+dur = lda_model$scaling[1]
+fra = lda_model$scaling[2]
+
+test = cbind(video2$duration*dur, video2$frames*fra)
+
+# wtith col diff:
+id = which(class == "mpeg")
+mpeg = test[id,]
+other = test[-id,]
+plot(y= other[,1], x=other[,2], col="red",  main="duration vs frames", ylim = c(0,2), xlim = c(-2.5,1.5))
+points(y=mpeg[,1] , x= mpeg[,2], col="blue")
+
+lda_model$scaling
+lda_model$prior
+# The result of classification is rather bad. It is clear that covariance matrices per 
+# class are very different. In addition, class-conditional distributions do not look like 
+# multivariate normal.
+#Step 6
+
+

@@ -159,3 +159,7 @@ text(tree_model)
 # Since the decision boundary between the two classes is linear, but not perpendicular to
 # any of the cordinate axis. The tree has to create this boundary by producing a "stair-like"
 # decision bounary between the two classes. More leaves => more lika a linear boundary. 
+
+
+# Assignment 2 - Support vector machines
+

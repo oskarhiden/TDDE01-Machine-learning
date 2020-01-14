@@ -121,5 +121,41 @@ lda_model$prior
 # class are very different. In addition, class-conditional distributions do not look like 
 # multivariate normal.
 #Step 6
+library(tree)
+# TEST
+data = data.frame(cbind(video$duration, video$frames, as.factor(class)))
+names(data) = c("duration", "frames", "class")
+tree_model = tree(class~duration + frames, data = data)
+plot(tree_model)
+text(tree_model, pretty = 0)
 
+dev = numeric(11)
+for(i in 2:11){
+  pruned_tree = prune.tree(tree_model, best=i)
+  #predict(pruned_tree)
+  dev[i] = deviance(pruned_tree)
+}
+dev
+plot(dev)
+#plot(cv.tree(tree_model)) ?????????????????
+# END TEST
 
+data3 = video
+data3$class = ifelse(data3$codec == "mpeg4", "mpeg", "other")
+data3$codec = c()
+data3$class = as.factor(data3$class)
+
+tree_model = tree(class ~ duration + frames, data = data3)
+cv_tree = cv.tree(tree_model)
+best_size = cv_tree$size[which.min(cv_tree$dev)] 
+best_size #11 leaves in final tree with current settings in tree()
+plot(cv_tree$size, cv_tree$dev, type="b")
+
+# final tree
+print(tree_model)
+plot(tree_model)
+text(tree_model)
+
+# Since the decision boundary between the two classes is linear, but not perpendicular to
+# any of the cordinate axis. The tree has to create this boundary by producing a "stair-like"
+# decision bounary between the two classes. More leaves => more lika a linear boundary. 

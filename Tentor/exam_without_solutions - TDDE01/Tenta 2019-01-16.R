@@ -121,3 +121,46 @@ coef(lasso_model_pca, s=lambda_min_pca)
 coef(glmnet(x, train$Mortality, alpha=1, family= "poisson" , lambda=lambda_min_pca))
 # 3 PC-components are used!
 # Yi~P(exp(7.484791442 -0.029906449*PC1 -0.013042022*PC2 +0.005404855*PC4))
+
+
+#Assignment 2 - Neural Network
+install.packages("neuralnet")
+library(neuralnet)
+set.seed(1234567890)
+Var <- runif(50, 0, 3)
+tr <- data.frame(Var, Sin=sin(Var))
+Var <- runif(50, 3, 9)
+te <- data.frame(Var, Sin=sin(Var))
+
+winit = runif(20, -1, 1)
+
+nn = neuralnet(Sin ~ Var, data = tr, hidden = c(3), startweights = winit)
+pred = predict(nn, newdata = te)
+
+plot(tr, ylim=c(-2,2), xlim=c(0, 8))
+points(x=te$Var, y=pred, col="red")
+points(te, col="blue")
+
+# Step 2
+# nn weights:
+nn$weights
+plot(nn)
+
+# calculate hidden units for data:
+logistic_sigmoid = function (x){
+  return(1/(1+exp(-x)))
+}
+x = te$Var
+x = sort(x)
+z1 = logistic_sigmoid(x*0.6170477-1.5198771)
+z2 = logistic_sigmoid(1.995*x-1.27708)
+z3 = logistic_sigmoid(-1.61733*x+4.89639)
+y=-3.92871*z1+2.67522*z2+0.84607*z3-0.62953
+
+plot(z1, ylim = c(0,1)) # -> 1
+points(z2, col="blue") # -> 1
+points(z3, col="red") # -> zero
+# For larges values y torwards:
+-3.92871+2.67522-0.62953
+print(y) # -> -3.92871+2.67522-0.62953 = -1.88302
+

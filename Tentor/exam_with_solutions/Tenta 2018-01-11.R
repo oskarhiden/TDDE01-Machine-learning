@@ -306,3 +306,7 @@ MSE_test = sum((p_test-test$sin)^2)/nrow(test)
 MSE_test
 plot(x = test$value, y=p_test, col="blue")
 points(test, col="red")
+
+# 1 layer was the best model according to our error, to test our model further we could
+# se that with the new data, error was still low. Therfore, a deeper nn is not always better
+# it could lead to overfitting the data. generating a high variance by capturing a lot fo noise

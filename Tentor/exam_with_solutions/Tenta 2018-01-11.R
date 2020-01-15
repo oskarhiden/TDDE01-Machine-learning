@@ -4,8 +4,8 @@ library(readr)
 #Assignment 1 
 
 #Step 1
-# video = read.csv("C:/Users/oskar/OneDrive/Universitet/Luleå Tekniska högskola/Databaser 1/Dokument/Git Repro/TDDE01-Machine-learning/Tentor/exam_with_solutions/video.csv")
-video = read.csv("Desktop/video.csv")
+video = read.csv("C:/Users/oskar/OneDrive/Universitet/Luleå Tekniska högskola/Databaser 1/Dokument/Git Repro/TDDE01-Machine-learning/Tentor/exam_with_solutions/video.csv")
+#video = read.csv("Desktop/video.csv")
 
 
 set.seed(12345)
@@ -165,7 +165,8 @@ text(tree_model)
 
 
 # Assignment 2 - Support vector machines
-spam = read.csv2("Desktop/spambase.csv")
+spam = read.csv2("C:/Users/oskar/OneDrive/Universitet/Luleå Tekniska högskola/Databaser 1/Dokument/Git Repro/TDDE01-Machine-learning/Tentor/exam_with_solutions/spambase.csv")
+#spam = read.csv2("Desktop/spambase.csv")
 library(kernlab)
 
 #pic model based on validation data(holdout method:
@@ -207,7 +208,7 @@ plot(misclasserror, type="b")
 
 # Step 2 - error estimation using retrained model on tarin+valid and then test on test data.
 train_valid = rbind(test, valid)
-final_model = ksvm(as.factor(Spam) ~ ., data=train_valid, kernel="rbfdot", kpar= list(sigma=0.05), C = 0.5)
+final_model = ksvm(as.factor(Spam) ~ ., data=train_valid, kernel="rbfdot", kpar= list(sigma=0.05), C = 5)
 final_pred = predict(final_model, newdata=test)
 final_error = misclass(test$Spam, final_pred)
 final_error
@@ -222,6 +223,9 @@ coef(final_model)
 # User_model by traing on all data, C=5
 user_model = ksvm(as.factor(Spam) ~ ., data=spam, kernel="rbfdot", kpar= list(sigma=0.05), C = 5)
 
+# C is the cost of constraints violation, this is the 'C'-constant of 
+# the regularization term in the Lagrange formulation. Higher C means higher bias in training.
+
 
 # Assignment 2 - Neural Networks
 library(neuralnet)
@@ -233,44 +237,72 @@ data = data.frame(value, sin)
 plot(data)
 
 #devide data
-n=dim(data)[1]
-set.seed(12345)
-id=sample(1:n, floor(n*0.5))
-train=data[id,]
-valid=data[-id,] 
+train=data[1:25,]
+valid=data[26:50,]
+plot(train, col="blue")
+points(valid, col="red")
 
-threshold = (1:10)/1000
-
-weight = runif(31, -1, 1)
+#set.seed(12345)
+winit = runif(31, -1, 1)
 
 SE_tr = vector("numeric", length = 10)
 SE_va = vector("numeric", length = 10) 
 
-SE_tr_2 = vector("numeric", length = 10)
-SE_va_2 = vector("numeric", length = 10) 
 for(i in 1:10){
-  nn = neuralnet(sin~value, data = train, hidden = c(10), startweights = weight, threshold = threshold[i])
+  nn <- neuralnet(sin~value, data = train, hidden = c(10), startweights = winit, threshold = i/1000)
   
   p_tr = predict(nn, newdata = train)
   SE_tr[i] = sum((train$sin - p_tr)^2)
   p_va = predict(nn, newdata = valid)
   SE_va[i] = sum((valid$sin - p_va)^2)
-  
-  nn_2 = neuralnet(sin~value, data = train, hidden = c(3, 3), startweights = weight, threshold = threshold[i])
-  
-  p_tr = predict(nn_2, newdata = train)
-  SE_tr_2[i] = sum((train$sin - p_tr)^2)
-  p_va = predict(nn_2, newdata = valid)
-  SE_va_2[i] = sum((valid$sin - p_va)^2)
 }
 
-which.min(SE_va) 
+best_1 = which.min(SE_va) 
 plot(SE_tr, col = "red",  ylab = "Sum of Squared Error", main = "one layer")
 par(new=TRUE)
 plot(SE_va, col = "blue", ylab = "Sum of Squared Error") 
 
-which.min(SE_va_2) 
+#set.seed(12345)
+#weight = runif(22, -1, 1)
+SE_tr_2 = vector("numeric", length = 10)
+SE_va_2 = vector("numeric", length = 10) 
+for (i in 1:10){
+  nn_2 = neuralnet(sin~value, data = train, hidden = c(3, 3), startweights = winit, threshold = threshold[i])
+  
+  p_tr_2 = predict(nn_2, newdata = train)
+  SE_tr_2[i] = sum((train$sin - p_tr_2)^2)
+  p_va_2 = predict(nn_2, newdata = valid)
+  SE_va_2[i] = sum((valid$sin - p_va_2)^2)
+}
+
+best_2 = which.min(SE_va_2) 
 plot(SE_tr_2, col = "red",  ylab = "Sum of Squared Error", main= "two layer")
 par(new=TRUE)
 plot(SE_va_2, col = "blue", ylab = "Sum of Squared Error") 
 
+SE_va[best_1]
+SE_va_2[best_2]
+
+#best model = 1 layer of 10 hidden units with threshold = 1/1000
+nn <- neuralnet(sin~value, data = train, hidden = c(10), startweights = winit, threshold = best_1/1000)
+
+p_tr = predict(nn, newdata = train)
+p_va = predict(nn, newdata = valid)
+
+plot(x = valid$value, y=p_va, col="blue")
+points(valid, col="red")
+
+# This model was choosen because it generated the lowest squared error for validation data. 
+
+# Step 2 - Generalisation error for NN above:
+# Sampling more data:
+set.seed(12345)
+value = runif(25, 0, 10)
+sin = sin(value)
+test = data.frame(value, sin)
+
+p_test = predict(nn, newdata = test)
+MSE_test = sum((p_test-test$sin)^2)/nrow(test)
+MSE_test
+plot(x = test$value, y=p_test, col="blue")
+points(test, col="red")

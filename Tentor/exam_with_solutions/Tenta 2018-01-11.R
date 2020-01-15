@@ -4,7 +4,9 @@ library(readr)
 #Assignment 1 
 
 #Step 1
-video = read.csv("C:/Users/oskar/OneDrive/Universitet/Luleå Tekniska högskola/Databaser 1/Dokument/Git Repro/TDDE01-Machine-learning/Tentor/exam_with_solutions/video.csv")
+# video = read.csv("C:/Users/oskar/OneDrive/Universitet/Luleå Tekniska högskola/Databaser 1/Dokument/Git Repro/TDDE01-Machine-learning/Tentor/exam_with_solutions/video.csv")
+video = read.csv("Desktop/video.csv")
+
 
 set.seed(12345)
 n=dim(video)[1]
@@ -38,6 +40,7 @@ sprintf("%2.3f",cumsum(lambda_scaled)/sum(lambda_scaled)*100)
 # % the change can be small.
 
 #Step 2
+library(pcr)
 train$codec = c()
 test$codec = c()
 # = data.frame(scale(train))
@@ -162,4 +165,112 @@ text(tree_model)
 
 
 # Assignment 2 - Support vector machines
+spam = read.csv2("Desktop/spambase.csv")
+library(kernlab)
+
+#pic model based on validation data(holdout method:
+data = spam
+n=dim(data)[1]
+set.seed(12345)
+id=sample(1:n, floor(n*0.6))
+train=data[id,]
+id1=setdiff(1:n, id)
+set.seed(12345)
+id2=sample(id1, floor(n*0.2))
+valid=data[id2,]
+id3=setdiff(id1,id2)
+test=data[id3,]
+
+#train models
+svm_05 = ksvm(as.factor(Spam) ~ ., data=train, kernel="rbfdot", kpar= list(sigma=0.05), C = 0.5)
+svm_1 =  ksvm(as.factor(Spam) ~ ., data=train, kernel="rbfdot", kpar= list(sigma=0.05), C = 1)
+svm_5 =  ksvm(as.factor(Spam) ~ ., data=train, kernel="rbfdot", kpar= list(sigma=0.05), C = 5)
+
+pred_05 = predict(svm_05, newdata = valid)
+pred_1 = predict(svm_1, newdata = valid)
+pred_5 = predict(svm_5, newdata = valid)
+#table(valid$Spam, pred_05)
+
+misclass = function(true, predict){
+  table = table(true, predict)
+  return(1-(sum(diag(table)/sum(table))))
+}
+misclasserror = numeric(3)
+
+misclasserror[1] = misclass(valid$Spam, pred_05) 
+misclasserror[2] = misclass(valid$Spam, pred_1) 
+misclasserror[3] = misclass(valid$Spam, pred_5) 
+
+misclasserror
+plot(misclasserror, type="b")
+# smallest error form C = 5, that model is choosen
+
+# Step 2 - error estimation using retrained model on tarin+valid and then test on test data.
+train_valid = rbind(test, valid)
+final_model = ksvm(as.factor(Spam) ~ ., data=train_valid, kernel="rbfdot", kpar= list(sigma=0.05), C = 0.5)
+final_pred = predict(final_model, newdata=test)
+final_error = misclass(test$Spam, final_pred)
+final_error
+# Final error is 0.04561912
+
+# TEST
+alpha(final_model)
+nSV(final_model)
+coef(final_model)
+# End TEST
+
+# User_model by traing on all data, C=5
+user_model = ksvm(as.factor(Spam) ~ ., data=spam, kernel="rbfdot", kpar= list(sigma=0.05), C = 5)
+
+
+# Assignment 2 - Neural Networks
+library(neuralnet)
+set.seed(12345)
+
+value = runif(50,0,10)
+sin = sin(value)
+data = data.frame(value, sin)
+plot(data)
+
+#devide data
+n=dim(data)[1]
+set.seed(12345)
+id=sample(1:n, floor(n*0.5))
+train=data[id,]
+valid=data[-id,] 
+
+threshold = (1:10)/1000
+
+weight = runif(31, -1, 1)
+
+SE_tr = vector("numeric", length = 10)
+SE_va = vector("numeric", length = 10) 
+
+SE_tr_2 = vector("numeric", length = 10)
+SE_va_2 = vector("numeric", length = 10) 
+for(i in 1:10){
+  nn = neuralnet(sin~value, data = train, hidden = c(10), startweights = weight, threshold = threshold[i])
+  
+  p_tr = predict(nn, newdata = train)
+  SE_tr[i] = sum((train$sin - p_tr)^2)
+  p_va = predict(nn, newdata = valid)
+  SE_va[i] = sum((valid$sin - p_va)^2)
+  
+  nn_2 = neuralnet(sin~value, data = train, hidden = c(3, 3), startweights = weight, threshold = threshold[i])
+  
+  p_tr = predict(nn_2, newdata = train)
+  SE_tr_2[i] = sum((train$sin - p_tr)^2)
+  p_va = predict(nn_2, newdata = valid)
+  SE_va_2[i] = sum((valid$sin - p_va)^2)
+}
+
+which.min(SE_va) 
+plot(SE_tr, col = "red",  ylab = "Sum of Squared Error", main = "one layer")
+par(new=TRUE)
+plot(SE_va, col = "blue", ylab = "Sum of Squared Error") 
+
+which.min(SE_va_2) 
+plot(SE_tr_2, col = "red",  ylab = "Sum of Squared Error", main= "two layer")
+par(new=TRUE)
+plot(SE_va_2, col = "blue", ylab = "Sum of Squared Error") 
 

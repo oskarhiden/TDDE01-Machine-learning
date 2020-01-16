@@ -67,6 +67,7 @@ mean(influenza$Mortality)
 log(1600)
 log(2600)
 
+
 # Step 3 - regression tree
 library(tree)
 tree_model = tree(Mortality ~ ., data = train)
